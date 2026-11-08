@@ -1,6 +1,48 @@
 @extends('layouts.app', ['title' => 'Halo, '.$user->name, 'subtitle' => rt_name().' · '.rt_location()])
 
 @section('content')
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        @php($belum = $bills->where('status', 'belum'))
+        <div class="row g-3 mb-3">
+            <div class="col-6"><div class="stat"><div class="small text-secondary">Belum dibayar</div><div class="fs-4 fw-bold">{{ rupiah($belum->sum('amount')) }} <span class="fs-6 text-secondary">({{ $belum->count() }})</span></div></div></div>
+            <div class="col-6"><div class="stat"><div class="small text-secondary">Menunggu verifikasi</div><div class="fs-4 fw-bold">{{ $bills->where('status', 'menunggu')->count() }}</div></div></div>
+        </div>
+        @forelse ($bills as $b)
+            <div class="panel mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div><div class="fw-bold">{{ $b->name }} <span class="text-secondary fw-normal">· {{ $b->periodLabel() }}</span></div><div class="small text-secondary">{{ $b->allocation }}</div></div>
+                    <div class="text-end"><div class="fs-5 fw-bold">{{ rupiah($b->amount) }}</div>@include('finance.partials.status', ['status' => $b->status])</div>
+                </div>
+                @if ($b->rejection_note)<div class="alert alert-danger py-2 small mt-2 mb-0">Bukti sebelumnya ditolak: {{ $b->rejection_note }}</div>@endif
+                <div class="mt-3">
+                    @if ($b->status === 'menunggu')
+                        <div class="small text-secondary"><i class="bi bi-hourglass-split me-1"></i>Bukti diterima {{ $b->proof_uploaded_at?->translatedFormat('j M Y H:i') }} via {{ $b->payment_method }}, menunggu verifikasi Bendahara. <a href="{{ route('finance.bills.proof', $b) }}" target="_blank">Lihat bukti</a></div>
+                    @else
+                        @include('finance.partials.proof-form', ['bill' => $b])
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="panel text-center text-secondary py-5 mb-3"><i class="bi bi-check-circle fs-1 text-success"></i><div class="mt-2">Tidak ada tagihan yang harus dibayar. Terima kasih!</div></div>
+        @endforelse
+        @if ($paid->isNotEmpty())
+            <div class="panel"><h2 class="h6 fw-bold">Riwayat lunas terbaru</h2>
+                @foreach ($paid as $b)
+                    <div class="d-flex justify-content-between border-top py-2"><span>{{ $b->name }} <span class="text-secondary">{{ $b->periodLabel() }}</span></span>
+                        <span>{{ rupiah($b->amount) }} <a class="ms-2" target="_blank" href="{{ route('finance.bills.receipt', $b) }}">Struk</a></span></div>
+                @endforeach
+                <a href="{{ route('finance.bills.index') }}" class="d-inline-block mt-2 small">Semua tagihan</a>
+            </div>
+        @endif
+    </div>
+    <div class="col-lg-4"><div class="panel"><h2 class="h6 fw-bold"><i class="bi bi-bank me-1"></i>Cara membayar</h2>
+        <p class="mb-3" style="white-space:pre-line">{{ setting('payment_info') }}</p>
+        <ol class="small text-secondary ps-3 mb-0"><li>Transfer sesuai nominal tagihan.</li><li>Foto atau tangkap layar bukti transfer.</li><li>Unggah bukti pada tagihan yang dibayar.</li><li>Bendahara memverifikasi, lalu struk digital terbit.</li></ol>
+        <a href="{{ route('finance.report') }}" class="d-inline-block mt-3 small">Lihat laporan keuangan RT</a>
+    </div></div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-7">
         <div class="panel mb-3">
@@ -30,7 +72,7 @@
                 <div class="text-secondary small">Belum ada pengajuan. Ajukan surat domisili, pengantar KTP/KK, SKTM, dan lainnya dari rumah.</div>
             @endforelse
         </div>
-        <div class="panel text-secondary small"><i class="bi bi-info-circle me-1"></i>Tagihan iuran, pengumuman, dan aduan akan tersedia di dasbor ini pada tahap berikutnya.</div>
+        <div class="panel text-secondary small"><i class="bi bi-info-circle me-1"></i>Pengumuman, aduan, dan notifikasi akan tersedia di dasbor ini pada tahap berikutnya.</div>
     </div>
     <div class="col-lg-5"><div class="panel">
         <h2 class="h5 mb-3">Pengurus inti</h2>

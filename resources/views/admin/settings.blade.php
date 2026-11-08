@@ -2,7 +2,7 @@
 
 @php
     $tab = request('tab', 'identitas');
-    $tabs = ['identitas' => 'Identitas & logo', 'wilayah' => 'Wilayah', 'beranda' => 'Bagian utama', 'pengurus' => 'Profil pengurus', 'fitur' => 'Fitur layanan', 'footer' => 'Footer', 'kop' => 'Kop surat'];
+    $tabs = ['identitas' => 'Identitas & logo', 'wilayah' => 'Wilayah', 'beranda' => 'Bagian utama', 'pengurus' => 'Profil pengurus', 'fitur' => 'Fitur layanan', 'footer' => 'Footer', 'kop' => 'Kop surat', 'bayar' => 'Pembayaran'];
     $text = function (string $key, string $label, string $col = 'col-md-6', bool $area = false) {
         $value = e(old($key, \App\Models\Setting::raw($key)));
         $ph = e(config('rt.defaults.'.$key));
@@ -104,6 +104,14 @@
             <div class="col-xl-5"><div class="panel"><h2 class="h6 fw-bold">Pratinjau kop (tersimpan)</h2>
                 <div class="a4-stage rounded-3"><div class="a4" style="zoom:.45;min-height:0;padding:12mm">@include('letters.partials.letterhead')</div></div></div></div>
         </div></div>
+
+        <div class="tab-pane fade @if ($tab === 'bayar') show active @endif" id="t-bayar"><div class="panel"><div class="row g-3">
+            <div class="col-12">
+                <label class="form-label" for="payment_info">Rekening / e-wallet tujuan transfer</label>
+                <textarea name="payment_info" id="payment_info" rows="4" class="form-control" placeholder="{{ config('rt.defaults.payment_info') }}">{{ old('payment_info', \App\Models\Setting::raw('payment_info')) }}</textarea>
+                <div class="form-text">Tampil di dasbor warga sebagai petunjuk membayar tagihan. Pembayaran masih manual: warga mengunggah bukti, Bendahara memverifikasi.</div>
+            </div>
+        </div></div></div>
 
         <div class="tab-pane fade @if ($tab === 'footer') show active @endif" id="t-footer"><div class="panel"><div class="row g-3">
             {!! $text('footer_left', 'Teks kiri (kosongkan untuk otomatis)') !!}

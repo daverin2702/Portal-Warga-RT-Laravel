@@ -72,6 +72,12 @@ return [
         'bi-lightning', 'bi-droplet', 'bi-camera', 'bi-geo-alt', 'bi-bicycle', 'bi-basket',
     ],
 
+    // Metode bayar yang bisa dipilih warga saat mengunggah bukti (pembayaran masih manual).
+    'payment_methods' => ['Transfer BCA', 'Transfer Mandiri', 'Transfer BRI', 'Transfer BNI', 'Transfer bank lain', 'GoPay', 'OVO', 'DANA', 'ShopeePay', 'QRIS'],
+
+    // Saran alokasi dana kas (bebas diketik selain ini).
+    'cash_allocations' => ['Kas umum', 'IPL', 'Kebersihan', 'Keamanan', 'Pembangunan saung', 'Playground', 'Kegiatan 17 Agustus'],
+
     'religions' => ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'],
 
     // Kata sandi bawaan akun hasil impor Excel (pengguna diminta menggantinya saat masuk).
@@ -118,6 +124,8 @@ return [
         'letterhead_line2' => '',
         'letterhead_line3' => '',
         'letterhead_line4' => '',
+        // Info rekening / e-wallet tujuan transfer, tampil di dasbor warga
+        'payment_info' => "Transfer: BCA 1234567890 a.n. Bendahara RT\nE-wallet: DANA / OVO 0812-0000-0000",
         // Alamat publik website untuk QR verifikasi (kosong = APP_URL). Isi jika website diakses lewat domain lain.
         'public_url' => '',
     ],

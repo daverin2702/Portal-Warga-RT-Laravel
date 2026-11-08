@@ -2,15 +2,17 @@
 
 namespace Database\Seeders;
 
+use App\Models\CashTransaction;
 use App\Models\Household;
 use App\Models\User;
+use App\Services\BillService;
 use App\Services\PositionService;
 use Illuminate\Database\Seeder;
 
 /** Data contoh untuk mencoba aplikasi. Jangan dipakai untuk website sungguhan. */
 class DemoSeeder extends Seeder
 {
-    public function run(PositionService $positions): void
+    public function run(PositionService $positions, BillService $bills): void
     {
         $families = [
             ['Budi Santoso', 'A', '12', 4, 'owner', 'Jl. Mawar', 'Surabaya', '1980-05-14', 'Laki-laki', 'Karyawan Swasta', '081234567890'],
@@ -42,5 +44,17 @@ class DemoSeeder extends Seeder
             ]);
             $positions->assign($user, $position);
         }
+    
+        // Keuangan contoh: jenis tagihan bawaan, tagihan wajib bulan ini, saldo awal, dan satu pengeluaran disetujui.
+        $this->call(BillTypeSeeder::class);
+        $bills->issueMandatory(now()->format('Y-m'));
+        CashTransaction::query()->firstOrCreate(['category' => 'Saldo awal', 'type' => 'masuk'], [
+            'date' => now()->startOfMonth()->toDateString(), 'allocation' => 'Kas umum', 'description' => 'Saldo awal pembukuan',
+            'amount' => 1500000, 'status' => 'disetujui',
+        ]);
+        CashTransaction::query()->firstOrCreate(['category' => 'Listrik pos ronda', 'type' => 'keluar'], [
+            'date' => now()->startOfMonth()->toDateString(), 'allocation' => 'Keamanan', 'description' => 'Token listrik pos ronda',
+            'amount' => 100000, 'status' => 'disetujui',
+        ]);
     }
 }

@@ -2,13 +2,13 @@
 
 # 🏘️ Portal Warga RT · Laravel 13
 
-**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR dengan persetujuan berjenjang, dan halaman depan yang bisa diatur sendiri.**
+**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR, iuran & kas yang transparan, dan halaman depan yang bisa diatur sendiri.**
 
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL%20%2F%20MariaDB-supported-4479A1?logo=mysql&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-7952B3?logo=bootstrap&logoColor=white)
-![Status](https://img.shields.io/badge/status-Tahap%202-F2B705)
+![Status](https://img.shields.io/badge/status-Tahap%203-F2B705)
 
 </div>
 
@@ -22,8 +22,8 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 |---|---|---|
 | **1** | Fondasi, login per peran, jabatan & hak akses, dasbor + grafik, data warga, akun, impor Excel, pengaturan situs, tema, profil, struktur pengurus | ✅ Selesai |
 | **2** | Surat: templat, editor A4, alur Sekretaris → Wakil → Ketua, tanda tangan QR/basah, cetak berkop, cek keaslian | ✅ Selesai |
-| 3 | Keuangan: jenis tagihan (IPL, Kas RT), tagihan wajib, bukti bayar, kas, laporan keuangan | ⏳ Berikutnya |
-| 4 | Pengumuman, aduan, notifikasi, tombol darurat, chat, perintah pindah data dari versi PHP | ⏳ |
+| **3** | Keuangan: jenis tagihan (IPL, Kas RT), tagihan wajib, bukti bayar, struk, kas, persetujuan pengeluaran, laporan keuangan | ✅ Selesai |
+| 4 | Pengumuman, aduan, notifikasi, tombol darurat, chat, perintah pindah data dari versi PHP | ⏳ Berikutnya |
 
 ---
 
@@ -60,6 +60,21 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 
 > Agar QR bisa dipindai warga, isi **Pengaturan Situs → Kop surat → Alamat publik website** (jangan `localhost`). Kamera browser butuh **https** atau **localhost**.
 
+## 💰 Fitur Tahap 3 — Keuangan
+
+- 🏷️ **Jenis tagihan**: IPL dan Kas RT bawaan (nominal contoh, bisa diubah), Bendahara bebas menambah jenis lain, menandai wajib/opsional, dan menentukan alokasi kas
+- 📤 **Terbitkan tagihan wajib** ke semua keluarga dalam satu klik per periode; tagihan ganda dicegah di tingkat database
+- 🧾 **Tagihan lain** untuk semua keluarga atau satu keluarga, dengan nominal sendiri
+- 📱 **Dasbor warga fokus tagihan**: daftar yang harus dibayar, info rekening/e-wallet, unggah bukti (foto/PDF)
+- ✅ **Verifikasi Bendahara**: terima → lunas + **struk digital** + pemasukan kas otomatis; tolak dengan alasan; tandai lunas tunai
+- 🔒 **Bukti bayar disimpan privat** (`storage/app/private`), hanya bisa dibuka keluarga pemilik dan pengurus
+- 🏦 **Kas RT**: saldo, laporan bulanan, dana per alokasi, mutasi; warga hanya melihat transaksi yang disetujui
+- ⚖️ **Pengeluaran berjenjang**: Bendahara memposting → Wakil memeriksa → Ketua menyetujui; baru masuk saldo setelah disetujui
+- 🖨️ **Laporan Keuangan** per periode: saldo awal–akhir, rekap per kategori, rincian masuk/keluar, cetak berkop dengan tanda tangan Ketua & Bendahara
+- 📊 **Grafik arus kas** bulanan di dasbor pengurus
+
+> Pembayaran masih **manual** (unggah bukti). Integrasi payment gateway bisa ditambahkan di `App\Services\BillService::accept()`.
+
 ---
 
 ## 🚀 Instalasi
@@ -83,10 +98,10 @@ php artisan key:generate
 
 # 3. Buat database kosong "portal_warga" di phpMyAdmin, lalu sesuaikan DB_* di .env
 
-# 4. Buat tabel + akun admin awal + 7 templat surat
+# 4. Buat tabel + akun admin awal + 7 templat surat + jenis tagihan IPL & Kas RT
 php artisan migrate --seed
 
-# (opsional) data contoh: 6 keluarga + akun pengurus
+# (opsional) data contoh: 6 keluarga, akun pengurus, tagihan bulan ini, dan kas
 php artisan db:seed --class=DemoSeeder
 
 # 5. Jalankan
@@ -130,6 +145,9 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 | `letter_templates` | templat surat: isi HTML + kolom tambahan |
 | `letter_requests` | pengajuan surat warga + riwayat persetujuan |
 | `letters` | draf & surat terbit: nomor, isi, TTD QR/basah, token verifikasi, riwayat |
+| `bill_types` | jenis tagihan: nominal bawaan, alokasi kas, wajib/opsional |
+| `bills` | tagihan per keluarga per periode, bukti bayar, struk |
+| `cash_transactions` | buku kas: pemasukan/pengeluaran, status persetujuan, riwayat |
 | `sessions`, `cache`, `jobs` | bawaan Laravel |
 
 > Database versi PHP **tidak langsung kompatibel**. Perintah pemindahan data (`php artisan rt:pindah-data`) dijadwalkan di Tahap 4.
@@ -142,11 +160,12 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 app/
 ├── Http/Controllers/         Beranda, Login, Dasbor, Warga, Profil, Struktur
 │   ├── Letters/              Pengajuan, Persetujuan, Templat, Buat/Arsip/Cetak, Verifikasi
+│   ├── Finance/              Tagihan, Jenis Tagihan, Kas & Persetujuan Kas, Laporan
 │   └── Admin/                Akun, Impor, Pengaturan, Tema
 ├── Http/Middleware/EnsurePasswordChanged.php
 ├── Models/                   User, Household, Setting
 ├── Services/                 PositionService, HouseholdImporter, SpreadsheetReader,
-│                             LetterRenderer (variabel, sanitasi, nomor), LetterWorkflow (alur persetujuan)
+│                             LetterRenderer, LetterWorkflow, BillService, CashWorkflow
 ├── Support/                  Board (profil Ketua/Wakil), Uploads
 └── helpers.php               setting(), rt_name(), rt_asset(), upload_url(), ...
 config/rt.php                 jabatan, wewenang, tema, nilai bawaan situs

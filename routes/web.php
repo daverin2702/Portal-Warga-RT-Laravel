@@ -6,6 +6,10 @@ use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Finance\BillController;
+use App\Http\Controllers\Finance\BillTypeController;
+use App\Http\Controllers\Finance\CashController;
+use App\Http\Controllers\Finance\ReportController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\Letters\ApprovalController;
@@ -67,6 +71,37 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::post('/templat-surat/{template}/duplikat', [LetterTemplateController::class, 'duplicate'])->name('letters.templates.duplicate');
             Route::delete('/templat-surat/{template}', [LetterTemplateController::class, 'destroy'])->name('letters.templates.destroy');
         });
+    });
+
+    // Keuangan: tagihan, kas, laporan
+    Route::get('/tagihan', [BillController::class, 'index'])->name('finance.bills.index');
+    Route::post('/tagihan/{bill}/bukti', [BillController::class, 'uploadProof'])->name('finance.bills.proof.store');
+    Route::get('/tagihan/{bill}/bukti', [BillController::class, 'proof'])->name('finance.bills.proof');
+    Route::get('/tagihan/{bill}/struk', [BillController::class, 'receipt'])->name('finance.bills.receipt');
+    Route::get('/kas', [CashController::class, 'index'])->name('finance.cash.index');
+    Route::get('/laporan-keuangan', ReportController::class)->name('finance.report');
+
+    Route::middleware('can:kelola-tagihan')->group(function () {
+        Route::post('/tagihan/wajib', [BillController::class, 'issueMandatory'])->name('finance.bills.mandatory');
+        Route::post('/tagihan', [BillController::class, 'store'])->name('finance.bills.store');
+        Route::delete('/tagihan/{bill}', [BillController::class, 'destroy'])->name('finance.bills.destroy');
+        Route::get('/jenis-tagihan', [BillTypeController::class, 'index'])->name('finance.types.index');
+        Route::post('/jenis-tagihan', [BillTypeController::class, 'store'])->name('finance.types.store');
+        Route::put('/jenis-tagihan/{type}', [BillTypeController::class, 'update'])->name('finance.types.update');
+        Route::patch('/jenis-tagihan/{type}/aktif', [BillTypeController::class, 'toggle'])->name('finance.types.toggle');
+    });
+    Route::middleware('can:verifikasi-bayar')->group(function () {
+        Route::post('/tagihan/{bill}/terima', [BillController::class, 'accept'])->name('finance.bills.accept');
+        Route::post('/tagihan/{bill}/tolak', [BillController::class, 'reject'])->name('finance.bills.reject');
+        Route::post('/tagihan/{bill}/tunai', [BillController::class, 'cash'])->name('finance.bills.cash');
+    });
+    Route::middleware('can:catat-kas')->group(function () {
+        Route::post('/kas', [CashController::class, 'store'])->name('finance.cash.store');
+        Route::delete('/kas/{cash}', [CashController::class, 'destroy'])->name('finance.cash.destroy');
+    });
+    Route::middleware('can:pengurus')->group(function () {
+        Route::get('/persetujuan-kas', [CashController::class, 'approvals'])->name('finance.cash.approvals');
+        Route::post('/persetujuan-kas/{cash}', [CashController::class, 'approve'])->name('finance.cash.approve');
     });
 
     // Data warga: semua pengurus bisa melihat, hanya Sekretaris/Wakil Sekretaris (dan admin) yang mengubah

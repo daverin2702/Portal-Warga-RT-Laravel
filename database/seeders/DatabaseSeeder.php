@@ -27,6 +27,6 @@ class DatabaseSeeder extends Seeder
             'must_change_password' => true,
         ]);
 
-        $this->call(LetterTemplateSeeder::class);
+        $this->call([LetterTemplateSeeder::class, BillTypeSeeder::class]);
     }
 }

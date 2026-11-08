@@ -17,7 +17,7 @@ class SettingController extends Controller
         'hero_badge', 'hero_title', 'hero_lead', 'hero_button_primary', 'hero_button_secondary',
         'board_title', 'board_subtitle', 'chair_name', 'chair_term', 'chair_message', 'vice_name', 'vice_term', 'vice_message',
         'footer_left', 'footer_right',
-        'letterhead_line1', 'letterhead_line2', 'letterhead_line3', 'letterhead_line4', 'public_url',
+        'letterhead_line1', 'letterhead_line2', 'letterhead_line3', 'letterhead_line4', 'public_url', 'payment_info',
     ];
 
     private const IMAGES = ['logo' => 'logo', 'logo_right' => 'logo', 'hero_image' => 'beranda', 'chair_photo' => 'pengurus', 'vice_photo' => 'pengurus'];
@@ -39,6 +39,7 @@ class SettingController extends Controller
             'rw_number' => ['required', 'string', 'max:5'],
             'profile_source' => ['required', Rule::in(['account', 'manual'])],
             'public_url' => ['nullable', 'url:http,https', 'max:200'],
+            'payment_info' => ['nullable', 'string', 'max:1000'],
             'favicon' => ['nullable', 'file', 'mimes:ico,png', 'max:512'],
             'features' => ['nullable', 'array', 'max:9'],
             'features.*.icon' => ['nullable', Rule::in(config('rt.feature_icons'))],
