@@ -113,6 +113,13 @@ return [
         'features' => '',
         'footer_left' => '',
         'footer_right' => 'Surat resmi dapat diverifikasi lewat kode QR pada dokumen.',
+        // Kop surat (kosong = dibuat otomatis dari data wilayah)
+        'letterhead_line1' => '',
+        'letterhead_line2' => '',
+        'letterhead_line3' => '',
+        'letterhead_line4' => '',
+        // Alamat publik website untuk QR verifikasi (kosong = APP_URL). Isi jika website diakses lewat domain lain.
+        'public_url' => '',
     ],
 
     'default_features' => [
@@ -132,5 +139,6 @@ return [
         'icons.css' => ['vendor/bootstrap-icons-1.13.2/bootstrap-icons.min.css', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css'],
         'chart.js' => ['vendor/chart/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'],
         'qrcode.js' => ['vendor/qrcode/qrcode.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'],
+        'html5-qrcode.js' => ['vendor/html5-qrcode/html5-qrcode.min.js', 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'],
     ],
 ];

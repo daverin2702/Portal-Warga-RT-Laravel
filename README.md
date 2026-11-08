@@ -2,13 +2,13 @@
 
 # 🏘️ Portal Warga RT · Laravel 13
 
-**Administrasi RT modern: data warga, jabatan pengurus, dasbor, dan halaman depan yang bisa diatur sendiri.**
+**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR dengan persetujuan berjenjang, dan halaman depan yang bisa diatur sendiri.**
 
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL%20%2F%20MariaDB-supported-4479A1?logo=mysql&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-7952B3?logo=bootstrap&logoColor=white)
-![Status](https://img.shields.io/badge/status-Tahap%201-F2B705)
+![Status](https://img.shields.io/badge/status-Tahap%202-F2B705)
 
 </div>
 
@@ -21,8 +21,8 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 | Tahap | Isi | Status |
 |---|---|---|
 | **1** | Fondasi, login per peran, jabatan & hak akses, dasbor + grafik, data warga, akun, impor Excel, pengaturan situs, tema, profil, struktur pengurus | ✅ Selesai |
-| 2 | Surat: templat, editor A4, alur Sekretaris → Wakil → Ketua, tanda tangan QR/basah, cek keaslian | ⏳ Berikutnya |
-| 3 | Keuangan: jenis tagihan (IPL, Kas RT), tagihan wajib, bukti bayar, kas, laporan keuangan | ⏳ |
+| **2** | Surat: templat, editor A4, alur Sekretaris → Wakil → Ketua, tanda tangan QR/basah, cetak berkop, cek keaslian | ✅ Selesai |
+| 3 | Keuangan: jenis tagihan (IPL, Kas RT), tagihan wajib, bukti bayar, kas, laporan keuangan | ⏳ Berikutnya |
 | 4 | Pengumuman, aduan, notifikasi, tombol darurat, chat, perintah pindah data dari versi PHP | ⏳ |
 
 ---
@@ -39,6 +39,26 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 - 🙋 **Profil Saya**: foto, nama, kata sandi, dan data keluarga
 - 🏛️ **Struktur organisasi** otomatis dari jabatan akun
 - 📴 **Aset offline**: Bootstrap, ikon, dan font sudah tersimpan di `public/vendor`
+
+## ✉️ Fitur Tahap 2 — Surat
+
+- 📝 **7 templat bawaan**: Pengantar RT/RW, Domisili, Pengantar KTP/KK, Kematian, SKTM, Nikah/Kelahiran/Kepindahan, Keterangan Usaha
+- 🖋️ **Editor A4** ala Word online untuk templat dan surat manual, dengan tombol sisip variabel `{{nama}}`, `{{alamat}}`, `{{nomor_surat}}`, dll. serta kolom tambahan per templat
+- 🏡 **Pengajuan warga** dari rumah, lengkap dengan kolom tambahan sesuai jenis surat dan riwayat proses
+- ✅ **Persetujuan berjenjang**: Sekretaris meneruskan → Wakil Ketua memeriksa (*checker*) → Ketua menandatangani (*signer*); setiap tahap bisa menolak dengan catatan
+- 🔏 **Tanda tangan digital (QR) atau basah**, dipilih Sekretaris dan bisa diubah Ketua saat menandatangani
+- 🖨️ **Cetak A4 berkop** (logo kiri & kanan, moto di kaki surat), tanda air *DRAF* sebelum disetujui
+- 🔎 **Cek keaslian publik**: halaman verifikasi QR dan pop-up **Cek Surat** di beranda (pindai kamera, foto QR, atau nomor + tanggal), data pemohon disensor (`Bu** Sa****`)
+- 🗂️ **Arsip surat** dengan pencarian dan saringan status
+
+| Menu | Siapa |
+|---|---|
+| Surat Pengantar | Warga mengajukan; pengurus memantau |
+| Persetujuan Surat | Pengurus (tombol muncul sesuai wewenang tahap) |
+| Buat Surat, Templat Surat | Sekretaris, Wakil Sekretaris, admin |
+| Arsip Surat | Pengurus |
+
+> Agar QR bisa dipindai warga, isi **Pengaturan Situs → Kop surat → Alamat publik website** (jangan `localhost`). Kamera browser butuh **https** atau **localhost**.
 
 ---
 
@@ -63,7 +83,7 @@ php artisan key:generate
 
 # 3. Buat database kosong "portal_warga" di phpMyAdmin, lalu sesuaikan DB_* di .env
 
-# 4. Buat tabel + akun admin awal
+# 4. Buat tabel + akun admin awal + 7 templat surat
 php artisan migrate --seed
 
 # (opsional) data contoh: 6 keluarga + akun pengurus
@@ -106,7 +126,10 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 |---|---|
 | `users` | akun: `username`, `role` (admin/pengurus/warga), `position` (jabatan), `household_id`, `photo`, `must_change_password` |
 | `households` | kepala keluarga: KK, NIK, lahir, `block`, `house_number`, `members_count`, `residency_status`, kontak darurat |
-| `settings` | pengaturan situs kunci-nilai (nama, logo, tema, teks beranda) |
+| `settings` | pengaturan situs kunci-nilai (nama, logo, tema, teks beranda, kop surat) |
+| `letter_templates` | templat surat: isi HTML + kolom tambahan |
+| `letter_requests` | pengajuan surat warga + riwayat persetujuan |
+| `letters` | draf & surat terbit: nomor, isi, TTD QR/basah, token verifikasi, riwayat |
 | `sessions`, `cache`, `jobs` | bawaan Laravel |
 
 > Database versi PHP **tidak langsung kompatibel**. Perintah pemindahan data (`php artisan rt:pindah-data`) dijadwalkan di Tahap 4.
@@ -118,10 +141,12 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 ```
 app/
 ├── Http/Controllers/         Beranda, Login, Dasbor, Warga, Profil, Struktur
+│   ├── Letters/              Pengajuan, Persetujuan, Templat, Buat/Arsip/Cetak, Verifikasi
 │   └── Admin/                Akun, Impor, Pengaturan, Tema
 ├── Http/Middleware/EnsurePasswordChanged.php
 ├── Models/                   User, Household, Setting
-├── Services/                 PositionService, HouseholdImporter, SpreadsheetReader
+├── Services/                 PositionService, HouseholdImporter, SpreadsheetReader,
+│                             LetterRenderer (variabel, sanitasi, nomor), LetterWorkflow (alur persetujuan)
 ├── Support/                  Board (profil Ketua/Wakil), Uploads
 └── helpers.php               setting(), rt_name(), rt_asset(), upload_url(), ...
 config/rt.php                 jabatan, wewenang, tema, nilai bawaan situs
@@ -141,5 +166,5 @@ public/uploads/               logo & foto unggahan (tidak masuk Git)
 
 ## ⚠️ Catatan
 
-- Grafik dasbor memakai Chart.js dari CDN sampai berkas `public/vendor/chart/chart.umd.min.js` ditambahkan.
+- Grafik dasbor memakai Chart.js dari CDN sampai berkas `public/vendor/chart/chart.umd.min.js` ditambahkan; pemindai kamera Cek Surat memakai html5-qrcode dari CDN sampai `public/vendor/html5-qrcode/html5-qrcode.min.js` ditambahkan (tanpa itu, dipakai pembaca QR bawaan browser bila tersedia).
 - Kode ini ditulis tanpa bisa dijalankan di lingkungan pembuatnya; uji pertama dilakukan di server Anda.

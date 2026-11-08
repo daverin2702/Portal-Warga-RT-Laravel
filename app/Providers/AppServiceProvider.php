@@ -35,5 +35,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Batasi percobaan masuk: 5 kali per menit per username + IP.
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by(strtolower((string) $request->input('username')).'|'.$request->ip()));
+
+        // Cek keaslian surat dari publik: 20 kali per 10 menit per IP.
+        RateLimiter::for('cek-surat', fn (Request $request) => Limit::perMinutes(10, 20)->by($request->ip())
+            ->response(fn () => response()->json(['error' => 'Terlalu banyak pengecekan. Coba lagi dalam beberapa menit.'], 429)));
     }
 }

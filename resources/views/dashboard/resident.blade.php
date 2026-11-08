@@ -18,7 +18,19 @@
                 <p class="text-secondary mb-0">Akun Anda belum terhubung ke data keluarga. Hubungi Sekretaris RT.</p>
             @endif
         </div>
-        <div class="panel text-secondary small"><i class="bi bi-info-circle me-1"></i>Tagihan iuran, surat pengantar, pengumuman, dan aduan akan tersedia di dasbor ini pada tahap berikutnya.</div>
+        <div class="panel mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">Surat pengantar</h2><a href="{{ route('letters.requests.index') }}" class="btn btn-primary btn-sm"><i class="bi bi-envelope-plus me-1"></i>Ajukan surat</a></div>
+            @forelse ($letterRequests as $r)
+                <div class="d-flex justify-content-between align-items-center border-top py-2">
+                    <div><div class="fw-semibold">{{ $r->template_name }}</div><div class="small text-secondary">{{ $r->created_at->translatedFormat('j M Y') }} · {{ $r->purpose }}</div></div>
+                    <div class="text-end">@include('letters.partials.status', ['status' => $r->status])
+                        @if ($r->letter?->isIssued())<a class="d-block small mt-1" target="_blank" href="{{ route('letters.print', $r->letter) }}">Cetak</a>@endif</div>
+                </div>
+            @empty
+                <div class="text-secondary small">Belum ada pengajuan. Ajukan surat domisili, pengantar KTP/KK, SKTM, dan lainnya dari rumah.</div>
+            @endforelse
+        </div>
+        <div class="panel text-secondary small"><i class="bi bi-info-circle me-1"></i>Tagihan iuran, pengumuman, dan aduan akan tersedia di dasbor ini pada tahap berikutnya.</div>
     </div>
     <div class="col-lg-5"><div class="panel">
         <h2 class="h5 mb-3">Pengurus inti</h2>

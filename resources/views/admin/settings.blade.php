@@ -2,7 +2,7 @@
 
 @php
     $tab = request('tab', 'identitas');
-    $tabs = ['identitas' => 'Identitas & logo', 'wilayah' => 'Wilayah', 'beranda' => 'Bagian utama', 'pengurus' => 'Profil pengurus', 'fitur' => 'Fitur layanan', 'footer' => 'Footer'];
+    $tabs = ['identitas' => 'Identitas & logo', 'wilayah' => 'Wilayah', 'beranda' => 'Bagian utama', 'pengurus' => 'Profil pengurus', 'fitur' => 'Fitur layanan', 'footer' => 'Footer', 'kop' => 'Kop surat'];
     $text = function (string $key, string $label, string $col = 'col-md-6', bool $area = false) {
         $value = e(old($key, \App\Models\Setting::raw($key)));
         $ph = e(config('rt.defaults.'.$key));
@@ -89,6 +89,20 @@
             </div>
             <template id="fiturTpl">@include('admin.partials.feature-row', ['i' => '__I__', 'f' => ['icon' => 'bi-star', 'title' => '', 'text' => '']])</template>
             <button type="button" class="btn btn-light" id="addFitur"><i class="bi bi-plus-lg me-1"></i>Tambah fitur</button>
+        </div></div>
+
+        <div class="tab-pane fade @if ($tab === 'kop') show active @endif" id="t-kop"><div class="row g-3">
+            <div class="col-xl-7"><div class="panel"><div class="row g-3">
+                <div class="col-12 small text-secondary">Kosongkan baris untuk memakai teks otomatis dari tab Wilayah. Logo kiri = logo RT, logo kanan diatur di tab Identitas &amp; logo. Moto RT tampil di kaki surat.</div>
+                {!! $text('letterhead_line1', 'Baris 1 (instansi)', 'col-12') !!}
+                {!! $text('letterhead_line2', 'Baris 2 (kecamatan)', 'col-12') !!}
+                {!! $text('letterhead_line3', 'Baris 3 (kelurahan/desa)', 'col-12') !!}
+                {!! $text('letterhead_line4', 'Baris 4 (RT/RW)', 'col-12') !!}
+                {!! $text('public_url', 'Alamat publik website untuk QR (opsional), mis. https://rt05.contoh.id', 'col-12') !!}
+                <div class="col-12 form-text mt-0">QR tanda tangan mengarah ke alamat ini. Jika kosong, memakai APP_URL. Jangan biarkan "localhost" jika surat akan dipindai warga.</div>
+            </div></div></div>
+            <div class="col-xl-5"><div class="panel"><h2 class="h6 fw-bold">Pratinjau kop (tersimpan)</h2>
+                <div class="a4-stage rounded-3"><div class="a4" style="zoom:.45;min-height:0;padding:12mm">@include('letters.partials.letterhead')</div></div></div></div>
         </div></div>
 
         <div class="tab-pane fade @if ($tab === 'footer') show active @endif" id="t-footer"><div class="panel"><div class="row g-3">

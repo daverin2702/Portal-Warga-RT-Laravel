@@ -72,4 +72,11 @@
     <span>@if (setting('footer_left')){{ setting('footer_left') }}@else{{ rt_name() }} &middot; {{ rt_location() }}@if (setting('motto')) &middot; <em>{{ setting('motto') }}</em>@endif @endif</span>
     <span>{{ setting('footer_right') }}</span>
 </div></footer>
+
+@include('letters.partials.check-popup')
 @endsection
+
+@push('scripts')
+<script>window.CEK_URL = @json(route('letters.check')); window.ASET_QR = @json(rt_asset('html5-qrcode.js'));</script>
+<script src="{{ asset('js/cek-surat.js') }}?v={{ filemtime(public_path('js/cek-surat.js')) }}"></script>
+@endpush

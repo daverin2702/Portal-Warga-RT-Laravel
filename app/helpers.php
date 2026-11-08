@@ -89,6 +89,36 @@ if (! function_exists('rupiah')) {
     }
 }
 
+if (! function_exists('mask_text')) {
+    /** Samarkan sebagian teks untuk verifikasi publik: "Budi Santoso" -> "Bu** Sa****". */
+    function mask_text(?string $text, int $open = 2): string
+    {
+        $words = preg_split('/\s+/u', trim((string) $text), -1, PREG_SPLIT_NO_EMPTY);
+
+        return implode(' ', array_map(function ($w) use ($open) {
+            $n = mb_strlen($w);
+            $keep = $n <= 2 ? 1 : ($n <= 4 ? min($open, 2) : $open);
+
+            return mb_substr($w, 0, $keep).str_repeat('*', max(1, $n - $keep));
+        }, $words));
+    }
+}
+
+if (! function_exists('letterhead_lines')) {
+    /** Empat baris kop surat; baris kosong dibuat dari data wilayah. */
+    function letterhead_lines(): array
+    {
+        $auto = [
+            setting('city') ? 'PEMERINTAH '.mb_strtoupper(setting('city')) : '',
+            mb_strtoupper((string) setting('district')),
+            mb_strtoupper((string) setting('village')),
+            'RUKUN TETANGGA '.setting('rt_number').' / RUKUN WARGA '.setting('rw_number'),
+        ];
+
+        return array_map(fn ($i) => setting('letterhead_line'.($i + 1)) ?: $auto[$i], [0, 1, 2, 3]);
+    }
+}
+
 if (! function_exists('active_theme')) {
     /** Tema aktif; admin bisa mempratinjau tema lain dengan ?pratinjau_tema=kunci. */
     function active_theme(): string

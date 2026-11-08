@@ -9,8 +9,16 @@
 </div>
 
 <div class="panel mb-4">
-    <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-1"></i>Akses cepat</h2>
+    <h2 class="h5 mb-3"><i class="bi bi-bell me-1"></i>Perlu tindakan Anda</h2>
+    @forelse ($tasks as [$label, $n])
+        <a href="{{ route('letters.approvals.index') }}" class="d-flex justify-content-between align-items-center border-top py-2 text-decoration-none text-reset"><span>{{ $label }}</span><span class="badge text-bg-warning">{{ $n }}</span></a>
+    @empty
+        <div class="text-secondary">Tidak ada yang menunggu. Semua beres.</div>
+    @endforelse
+    <h2 class="h6 fw-bold mt-4 mb-2"><i class="bi bi-lightning-charge me-1"></i>Akses cepat</h2>
     <div class="d-flex flex-wrap gap-2">
+        @can('buat-surat')<a class="btn btn-primary btn-sm" href="{{ route('letters.create') }}"><i class="bi bi-pencil-square me-1"></i>Buat surat</a>@endcan
+        <a class="btn btn-light btn-sm" href="{{ route('letters.approvals.index') }}">Persetujuan surat</a>
         @can('kelola-warga')<a class="btn btn-primary btn-sm" href="{{ route('households.create') }}"><i class="bi bi-person-plus me-1"></i>Tambah keluarga</a>@endcan
         <a class="btn btn-light btn-sm" href="{{ route('households.index') }}">Data warga</a>
         <a class="btn btn-light btn-sm" href="{{ route('organization') }}">Struktur pengurus</a>
@@ -19,7 +27,7 @@
             <a class="btn btn-light btn-sm" href="{{ route('admin.settings.edit') }}">Pengaturan situs</a>
         @endif
     </div>
-    <div class="small text-secondary mt-3">Modul surat, iuran, kas, laporan keuangan, pengumuman, aduan, notifikasi, dan chat menyusul di tahap berikutnya.</div>
+    <div class="small text-secondary mt-3">Modul iuran, kas, laporan keuangan, pengumuman, aduan, notifikasi, dan chat menyusul di tahap berikutnya.</div>
 </div>
 
 <div class="row g-3 mb-4">

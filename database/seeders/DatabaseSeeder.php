@@ -26,5 +26,7 @@ class DatabaseSeeder extends Seeder
             'position' => 'warga',
             'must_change_password' => true,
         ]);
+
+        $this->call(LetterTemplateSeeder::class);
     }
 }

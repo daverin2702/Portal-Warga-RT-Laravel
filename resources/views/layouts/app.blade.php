@@ -4,7 +4,13 @@
         ['Dasbor', 'dashboard', 'bi-grid-1x2', true],
         ['Struktur Pengurus', 'organization', 'bi-diagram-3', true],
         ['Profil Saya', 'profile.edit', 'bi-person-circle', true],
+        ['#', 'Layanan', null, true],
+        ['Surat Pengantar', 'letters.requests.index', 'bi-envelope-paper', true],
         ['#', 'Kepengurusan', null, $u->can('pengurus')],
+        ['Persetujuan Surat', 'letters.approvals.index', 'bi-check2-square', $u->can('pengurus')],
+        ['Buat Surat', 'letters.create', 'bi-pencil-square', $u->can('buat-surat')],
+        ['Templat Surat', 'letters.templates.index', 'bi-file-earmark-richtext', $u->can('buat-surat')],
+        ['Arsip Surat', 'letters.archive', 'bi-archive', $u->can('pengurus')],
         ['Data Warga', 'households.index', 'bi-people', $u->can('pengurus')],
         ['#', 'Administrator', null, $u->isAdmin()],
         ['Akun Pengguna', 'admin.users.index', 'bi-person-lock', $u->isAdmin()],
@@ -30,7 +36,7 @@
                 @if ($label === '#')
                     <div class="nav-label">{{ $route }}</div>
                 @else
-                    @php($pola = str_contains($route, '.') ? \Illuminate\Support\Str::beforeLast($route, '.').'.*' : $route)
+                    @php($pola = str_ends_with($route, '.index') ? \Illuminate\Support\Str::beforeLast($route, '.').'.*' : $route)
                     <a class="nav-link {{ request()->routeIs($pola) ? 'active' : '' }}" href="{{ route($route) }}"><i class="bi {{ $icon }}"></i>{{ $label }}</a>
                 @endif
             @endforeach
