@@ -79,6 +79,7 @@
                 <div class="text-secondary small">Belum ada pengumuman.</div>
             @endforelse
         </div>
+        <a href="{{ route('cctv.index') }}" class="panel mb-4 d-flex align-items-center gap-3 text-decoration-none text-reset"><i class="bi bi-camera-video fs-3 text-primary"></i><div><div class="fw-semibold">CCTV Lingkungan</div><div class="small text-secondary">Pantau gerbang dan jalan lingkungan secara langsung.</div></div><i class="bi bi-chevron-right ms-auto"></i></a>
         <div class="panel"><div class="d-flex justify-content-between"><h2 class="h5 mb-3">Aduan saya</h2><a class="small" href="{{ route('complaints.index') }}">Kirim / lihat</a></div>
             @forelse ($complaints as $c)
                 <div class="d-flex justify-content-between border-top py-2"><div><div class="fw-semibold">{{ $c->title }}</div><div class="small text-secondary">{{ $c->category }} · {{ $c->created_at->translatedFormat('j M Y') }}</div></div>

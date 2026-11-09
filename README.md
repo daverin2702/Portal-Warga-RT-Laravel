@@ -2,13 +2,13 @@
 
 # 🏘️ Portal Warga RT · Laravel 13
 
-**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR, iuran & kas yang transparan, pengumuman, aduan, tombol darurat, chat, dan halaman depan yang bisa diatur sendiri.**
+**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR, iuran & kas yang transparan, pengumuman, aduan, tombol darurat, chat, CCTV live, dan halaman depan yang bisa diatur sendiri.**
 
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL%20%2F%20MariaDB-supported-4479A1?logo=mysql&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-7952B3?logo=bootstrap&logoColor=white)
-![Status](https://img.shields.io/badge/status-Tahap%204%20selesai-2EA043)
+![Status](https://img.shields.io/badge/status-Tahap%205%20selesai-2EA043)
 
 </div>
 
@@ -24,6 +24,7 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 | **2** | Surat: templat, editor A4, alur Sekretaris → Wakil → Ketua, tanda tangan QR/basah, cetak berkop, cek keaslian | ✅ Selesai |
 | **3** | Keuangan: jenis tagihan (IPL, Kas RT), tagihan wajib, bukti bayar, struk, kas, persetujuan pengeluaran, laporan keuangan | ✅ Selesai |
 | **4** | Pengumuman, aduan, notifikasi per peran, tombol darurat, chat pop-up, perintah pindah data dari versi PHP | ✅ Selesai |
+| **5** | CCTV: kelola kamera (penempatan, nama, koneksi), live streaming untuk semua peran, RTSP via gateway, HLS, MJPEG, snapshot, embed pihak ketiga, YouTube | ✅ Selesai |
 
 ---
 
@@ -85,6 +86,40 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 - 📊 Dasbor menampilkan pengumuman terbaru, aduan keluarga (warga), dan jumlah aduan baru (pengurus)
 
 > Notifikasi, darurat, dan chat memakai **polling** ringan (15 detik; chat 4 detik saat dibuka), jadi berjalan di XAMPP biasa tanpa server websocket.
+
+## 📹 Fitur Tahap 5 — CCTV
+
+- 🗺️ **Kelola CCTV (admin)**: nama, merek, area/kelompok, titik pemasangan, urutan tampil, aktif/nonaktif, dan siapa yang boleh melihat (semua akun atau hanya pengurus)
+- 🔌 **Konektivitas segala merek**:
+
+| Jenis | Cocok untuk | Cara kerja |
+|---|---|---|
+| **RTSP** | Hikvision, Dahua, Imou, EZVIZ, Tapo, Reolink, Uniview, NVR/DVR umum | lewat gateway **go2rtc** atau **MediaMTX** (WebRTC, jeda rendah); sandi kamera tidak pernah sampai ke browser |
+| **HLS (.m3u8)** | NVR/cloud yang menyediakan HLS, gateway | diputar dengan hls.js / HLS bawaan Safari |
+| **MJPEG** | kamera IP lama, Axis, ESP32-CAM | aliran gambar langsung |
+| **Snapshot** | hampir semua kamera IP (`/ISAPI/.../picture`, `/cgi-bin/snapshot.cgi`) | diperbarui tiap N detik; bisa diambil lewat server portal (Basic & Digest auth) sehingga sandi tersembunyi |
+| **Embed** | layanan cloud pihak ketiga (Ivideon, Angelcam, RTSP.me, dll.), halaman web merek | tempel tautan atau kode `<iframe>` |
+| **YouTube Live** | siaran publik | tautan video/siaran atau ID kanal (selalu memutar siaran terbaru kanal itu) |
+
+- 📺 **Layar pantau semua peran**: kisi 1–4 kolom, filter per area, jam berjalan, layar penuh, tombol "coba lagi"; pemutar hanya aktif saat terlihat di layar dan berhenti saat tab disembunyikan (hemat kuota)
+- ✅ **Tes koneksi** per kamera atau sekaligus: cek port RTSP + gateway, jawaban HTTP, dan jenis isi (gambar/MJPEG)
+- 🔔 **Pemantauan otomatis** `php artisan rt:cek-cctv` tiap 5 menit: admin, Seksi & Tim Keamanan diberi tahu saat kamera putus dan saat pulih
+- 📄 **Unduh konfigurasi** `go2rtc.yaml` / MediaMTX `paths` yang dibuat otomatis dari daftar kamera RTSP
+- 🔐 URL sumber disimpan **terenkripsi** (memakai `APP_KEY`), di layar admin sandi ditampilkan `****`
+
+### Menyiapkan gateway RTSP (go2rtc, Windows)
+1. Unduh `go2rtc_win64.zip` dari https://github.com/AlexxIT/go2rtc/releases, ekstrak ke mis. `C:\go2rtc`.
+2. Tambahkan kamera RTSP di **Kelola CCTV**, lalu klik **go2rtc.yaml** dan simpan di folder yang sama.
+3. Jalankan `go2rtc.exe` (biarkan menyala; bisa dijadikan layanan Windows dengan NSSM).
+4. Di **Kelola CCTV → Gateway**, isi alamat yang bisa dibuka warga, mis. `http://192.168.1.10:1984`, lalu **Tes**.
+
+> Warga di luar jaringan perumahan perlu akses ke gateway: gunakan port forwarding, Tailscale, atau Cloudflare Tunnel. Jika portal memakai **https**, gateway juga harus **https** (browser memblokir konten http di halaman https).
+
+### Menjalankan pemantauan otomatis
+Jadwal Laravel perlu dijalankan tiap menit:
+- Linux: cron `* * * * * cd /path/portal-warga && php artisan schedule:run >> /dev/null 2>&1`
+- Windows: Task Scheduler, aksi `php C:\xampp\htdocs\portal-warga\artisan schedule:run`, ulangi tiap 1 menit
+- Atau jalankan manual/sementara: `php artisan schedule:work`
 
 ## 🔁 Pindah Data dari Versi PHP
 
@@ -165,7 +200,8 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 | 💼 Bendahara | Jenis tagihan, menerbitkan tagihan, verifikasi bukti bayar, memposting kas |
 | 🧹 Seksi & tim | Akses pengurus: dasbor, data warga (lihat), grup chat pengurus |
 | 🏡 Warga | Membayar tagihan, mengajukan surat, mengirim aduan, membaca pengumuman, chat dengan pengurus |
-| 🚨 Semua akun | Tombol darurat, notifikasi, chat |
+| 🚨 Semua akun | Tombol darurat, notifikasi, chat, menonton CCTV |
+| 📹 Administrator (CCTV) | Menambah, menempatkan, menamai, dan menghubungkan kamera; gateway; tes koneksi |
 
 ---
 
@@ -186,6 +222,7 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 | `notifications` | notifikasi bawaan Laravel (database) |
 | `emergencies` | sinyal darurat aktif & riwayat |
 | `chat_messages`, `chat_reads` | pesan chat per ruang dan penanda baca |
+| `cameras` | kamera CCTV: nama, area, titik, jenis koneksi, sumber terenkripsi, nama aliran gateway, status koneksi terakhir |
 | `sessions`, `cache`, `jobs` | bawaan Laravel |
 
 > Database versi PHP **tidak langsung kompatibel**; pindahkan dengan `php artisan rt:pindah-data` (lihat di atas).
@@ -200,19 +237,21 @@ app/
 │   ├── Letters/              Pengajuan, Persetujuan, Templat, Buat/Arsip/Cetak, Verifikasi
 │   ├── Finance/              Tagihan, Jenis Tagihan, Kas & Persetujuan Kas, Laporan
 │   ├── Community/            Pengumuman, Aduan, Notifikasi, Darurat, Chat
-│   └── Admin/                Akun, Impor, Pengaturan, Tema
+│   ├── CctvController.php    layar pantau + snapshot lewat server
+│   └── Admin/                Akun, Impor, Pengaturan, Tema, Kamera (CCTV)
 ├── Http/Middleware/EnsurePasswordChanged.php
 ├── Models/                   User, Household, Setting, Letter*, Bill*, CashTransaction,
-│                             Announcement, Complaint, Emergency, ChatMessage
+│                             Announcement, Complaint, Emergency, ChatMessage, Camera
 ├── Services/                 PositionService, HouseholdImporter, SpreadsheetReader,
-│                             LetterRenderer, LetterWorkflow, BillService, CashWorkflow
-├── Console/Commands/         PindahData (rt:pindah-data)
+│                             LetterRenderer, LetterWorkflow, BillService, CashWorkflow, CameraProbe
+├── Console/Commands/         PindahData (rt:pindah-data), CekCctv (rt:cek-cctv)
 ├── Notifications/            PortalNotice
 ├── Support/                  Board (profil Ketua/Wakil), Uploads, Notify
 └── helpers.php               setting(), rt_name(), rt_asset(), upload_url(), ...
 config/rt.php                 jabatan, wewenang, tema, nilai bawaan situs
 resources/views/              Blade + Bootstrap 5
 public/js/app.js              lonceng, darurat, chat pop-up
+public/js/cctv.js             pemutar CCTV (HLS, MJPEG, snapshot, iframe)
 public/vendor/                aset offline
 public/uploads/               logo & foto unggahan (tidak masuk Git)
 ```
@@ -228,5 +267,5 @@ public/uploads/               logo & foto unggahan (tidak masuk Git)
 
 ## ⚠️ Catatan
 
-- Grafik dasbor memakai Chart.js dari CDN sampai berkas `public/vendor/chart/chart.umd.min.js` ditambahkan; pemindai kamera Cek Surat memakai html5-qrcode dari CDN sampai `public/vendor/html5-qrcode/html5-qrcode.min.js` ditambahkan (tanpa itu, dipakai pembaca QR bawaan browser bila tersedia).
+- Grafik dasbor memakai Chart.js dari CDN sampai berkas `public/vendor/chart/chart.umd.min.js` ditambahkan; pemutar HLS memakai hls.js dari CDN sampai `public/vendor/hls/hls.min.js` ditambahkan; pemindai kamera Cek Surat memakai html5-qrcode dari CDN sampai `public/vendor/html5-qrcode/html5-qrcode.min.js` ditambahkan (tanpa itu, dipakai pembaca QR bawaan browser bila tersedia).
 - Kode ini ditulis tanpa bisa dijalankan di lingkungan pembuatnya; uji pertama dilakukan di server Anda.

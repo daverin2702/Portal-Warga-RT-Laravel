@@ -127,6 +127,8 @@ return [
         // Info rekening / e-wallet tujuan transfer, tampil di dasbor warga
         'payment_info' => "Transfer: BCA 1234567890 a.n. Bendahara RT\nE-wallet: DANA / OVO 0812-0000-0000",
         // Alamat publik website untuk QR verifikasi (kosong = APP_URL). Isi jika website diakses lewat domain lain.
+        'cctv_gateway' => 'go2rtc',   // go2rtc | mediamtx: server perantara untuk kamera RTSP
+        'cctv_gateway_url' => '',     // alamat gateway yang bisa dibuka browser warga, mis. http://192.168.1.10:1984
         'public_url' => '',
     ],
 
@@ -147,6 +149,7 @@ return [
         'icons.css' => ['vendor/bootstrap-icons-1.13.2/bootstrap-icons.min.css', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css'],
         'chart.js' => ['vendor/chart/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'],
         'qrcode.js' => ['vendor/qrcode/qrcode.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'],
+        'hls.js' => ['vendor/hls/hls.min.js', 'https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js'],
         'html5-qrcode.js' => ['vendor/html5-qrcode/html5-qrcode.min.js', 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'],
     ],
 ];

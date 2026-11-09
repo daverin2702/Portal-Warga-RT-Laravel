@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CameraController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ThemeController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Community\ChatController;
 use App\Http\Controllers\Community\ComplaintController;
 use App\Http\Controllers\Community\EmergencyController;
 use App\Http\Controllers\Community\NotificationController;
+use App\Http\Controllers\CctvController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Finance\BillController;
 use App\Http\Controllers\Finance\BillTypeController;
@@ -141,6 +143,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         });
     });
 
+    // CCTV: semua peran bisa memantau; snapshot diteruskan lewat server
+    Route::get('/cctv', [CctvController::class, 'index'])->name('cctv.index');
+    Route::get('/cctv/{camera}/gambar', [CctvController::class, 'snapshot'])->middleware('throttle:240,1')->name('cctv.snapshot');
+
     // Menu administrator
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/akun', [UserController::class, 'index'])->name('users.index');
@@ -160,5 +166,16 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
         Route::get('/tema', [ThemeController::class, 'index'])->name('themes.index');
         Route::put('/tema', [ThemeController::class, 'update'])->name('themes.update');
+
+        Route::get('/cctv', [CameraController::class, 'index'])->name('cameras.index');
+        Route::get('/cctv/tambah', [CameraController::class, 'create'])->name('cameras.create');
+        Route::post('/cctv', [CameraController::class, 'store'])->name('cameras.store');
+        Route::post('/cctv/tes-semua', [CameraController::class, 'testAll'])->name('cameras.test-all');
+        Route::put('/cctv/gateway', [CameraController::class, 'gateway'])->name('cameras.gateway');
+        Route::get('/cctv/konfigurasi/{format}', [CameraController::class, 'config'])->whereIn('format', ['go2rtc', 'mediamtx'])->name('cameras.config');
+        Route::get('/cctv/{camera}/ubah', [CameraController::class, 'edit'])->name('cameras.edit');
+        Route::put('/cctv/{camera}', [CameraController::class, 'update'])->name('cameras.update');
+        Route::delete('/cctv/{camera}', [CameraController::class, 'destroy'])->name('cameras.destroy');
+        Route::post('/cctv/{camera}/tes', [CameraController::class, 'test'])->name('cameras.test');
     });
 });

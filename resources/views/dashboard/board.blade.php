@@ -32,6 +32,7 @@
     </div>
         <a class="btn btn-light btn-sm" href="{{ route('announcements.index') }}">Pengumuman</a>
         <a class="btn btn-light btn-sm" href="{{ route('complaints.index') }}">Aduan warga</a>
+        <a class="btn btn-light btn-sm" href="{{ route('cctv.index') }}"><i class="bi bi-camera-video me-1"></i>CCTV</a>
     </div>
 </div>
 

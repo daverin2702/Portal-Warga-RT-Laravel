@@ -11,6 +11,7 @@
         ['Laporan Keuangan', 'finance.report', 'bi-file-earmark-bar-graph', true],
         ['Pengumuman', 'announcements.index', 'bi-megaphone', true],
         ['Aduan & Aspirasi', 'complaints.index', 'bi-chat-left-text', true],
+        ['CCTV Lingkungan', 'cctv.index', 'bi-camera-video', true],
         ['#', 'Kepengurusan', null, $u->can('pengurus')],
         ['Persetujuan Surat', 'letters.approvals.index', 'bi-check2-square', $u->can('pengurus')],
         ['Buat Surat', 'letters.create', 'bi-pencil-square', $u->can('buat-surat')],
@@ -24,6 +25,7 @@
         ['Impor Data Warga', 'admin.import.create', 'bi-file-earmark-excel', $u->isAdmin()],
         ['Pengaturan Situs', 'admin.settings.edit', 'bi-gear', $u->isAdmin()],
         ['Tema Website', 'admin.themes.index', 'bi-palette', $u->isAdmin()],
+        ['Kelola CCTV', 'admin.cameras.index', 'bi-camera-video-fill', $u->isAdmin()],
     ];
     $logo = upload_url(setting('logo'));
 @endphp
