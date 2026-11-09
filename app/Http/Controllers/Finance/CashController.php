@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\Http\Controllers\Controller;
 use App\Models\CashTransaction;
 use App\Services\CashWorkflow;
+use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -55,10 +56,14 @@ class CashController extends Controller
         ]);
         $user = $request->user();
         $out = $data['type'] === 'keluar';
-        CashTransaction::query()->create($data + [
+        $tx = CashTransaction::query()->create($data + [
             'status' => $out ? 'diajukan' : 'disetujui', 'created_by' => $user->id,
             'log' => [['at' => now()->format('d/m/Y H:i'), 'by' => $user->name.' ('.$user->displayRole().')', 'action' => $out ? 'Diposting' : 'Dicatat', 'note' => '']],
         ]);
+
+        if ($out) {
+            Notify::send(Notify::ability('periksa-kas'), 'persetujuan', 'Pengeluaran kas perlu diperiksa', $tx->label().' ('.rupiah($tx->amount).')', route('finance.cash.approvals'));
+        }
 
         return back()->with('success', $out ? 'Pengeluaran diposting. Menunggu pemeriksaan Wakil Ketua dan persetujuan Ketua.' : 'Pemasukan dicatat.');
     }

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Announcement;
 use App\Models\Bill;
 use App\Models\CashTransaction;
+use App\Models\Complaint;
 use App\Models\Household;
 use App\Models\Letter;
 use App\Models\LetterRequest;
@@ -24,6 +26,8 @@ class DashboardController extends Controller
                 'bills' => Bill::query()->where('household_id', $user->household_id ?? 0)->where('status', '<>', 'lunas')->orderBy('period')->get(),
                 'paid' => Bill::query()->where('household_id', $user->household_id ?? 0)->where('status', 'lunas')->latest('paid_at')->limit(5)->get(),
                 'letterRequests' => LetterRequest::query()->with('letter')->where('household_id', $user->household_id ?? 0)->latest()->limit(5)->get(),
+                'announcements' => Announcement::query()->latest()->limit(3)->get(),
+                'complaints' => Complaint::query()->where('household_id', $user->household_id ?? 0)->latest()->limit(3)->get(),
                 'user' => $user,
                 'household' => $user->household,
                 'board' => User::query()->where('role', 'pengurus')->whereIn('position', config('rt.core_positions'))->orderByPosition()->get(),
@@ -50,6 +54,7 @@ class DashboardController extends Controller
             'residency' => collect(Household::RESIDENCY)->mapWithKeys(fn ($label, $key) => [$label => (int) ($residency[$key] ?? 0)]),
             'latest' => Household::query()->latest()->limit(5)->get(),
             'tasks' => $this->tasks($user),
+            'announcements' => Announcement::query()->latest()->limit(3)->get(),
         ]);
     }
 
@@ -74,6 +79,10 @@ class DashboardController extends Controller
             if ($user->can($ability) && ($n = CashTransaction::query()->where('status', $status)->count())) {
                 $tasks[] = ['Pengeluaran kas: '.strtolower($label), $n, route('finance.cash.approvals')];
             }
+        }
+
+        if ($user->can('tangani-aduan') && ($n = Complaint::query()->where('status', 'baru')->count())) {
+            $tasks[] = ['Aduan warga belum ditangani', $n, route('complaints.index', ['status' => 'baru'])];
         }
 
         return $tasks;

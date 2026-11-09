@@ -5,6 +5,11 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Community\AnnouncementController;
+use App\Http\Controllers\Community\ChatController;
+use App\Http\Controllers\Community\ComplaintController;
+use App\Http\Controllers\Community\EmergencyController;
+use App\Http\Controllers\Community\NotificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Finance\BillController;
 use App\Http\Controllers\Finance\BillTypeController;
@@ -24,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 
 // Verifikasi keaslian surat (publik)
-Route::get('/verifikasi/{token}', [VerificationController::class, 'show'])->where('token', '[A-Za-z0-9]{32}')->name('letters.verify');
+Route::get('/verifikasi/{token}', [VerificationController::class, 'show'])->where('token', '[A-Za-z0-9]{24,32}')->name('letters.verify');
 Route::post('/cek-surat', [VerificationController::class, 'check'])->middleware('throttle:cek-surat')->name('letters.check');
 
 // Masuk: satu halaman per peran (warga, pengurus, admin)
@@ -72,6 +77,26 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::delete('/templat-surat/{template}', [LetterTemplateController::class, 'destroy'])->name('letters.templates.destroy');
         });
     });
+
+    // Komunitas: pengumuman, aduan, notifikasi, darurat, chat
+    Route::get('/pengumuman', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::middleware('can:kelola-pengumuman')->group(function () {
+        Route::post('/pengumuman', [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::delete('/pengumuman/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    });
+    Route::get('/aduan', [ComplaintController::class, 'index'])->name('complaints.index');
+    Route::post('/aduan', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::get('/aduan/{complaint}/foto', [ComplaintController::class, 'photo'])->name('complaints.photo');
+    Route::put('/aduan/{complaint}', [ComplaintController::class, 'update'])->middleware('can:tangani-aduan')->name('complaints.update');
+
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifikasi/poll', [NotificationController::class, 'poll'])->name('notifications.poll');
+    Route::post('/notifikasi/baca', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/darurat', [EmergencyController::class, 'store'])->middleware('throttle:10,1')->name('emergencies.store');
+    Route::post('/darurat/{emergency}/aman', [EmergencyController::class, 'resolve'])->name('emergencies.resolve');
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/{room}', [ChatController::class, 'show'])->where('room', 'umum|pengurus|dm-\d+-\d+')->name('chat.show');
+    Route::post('/chat/{room}', [ChatController::class, 'store'])->where('room', 'umum|pengurus|dm-\d+-\d+')->middleware('throttle:30,1')->name('chat.store');
 
     // Keuangan: tagihan, kas, laporan
     Route::get('/tagihan', [BillController::class, 'index'])->name('finance.bills.index');

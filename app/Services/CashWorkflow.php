@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CashTransaction;
 use App\Models\User;
+use App\Support\Notify;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -27,7 +28,7 @@ class CashWorkflow
 
     public function advance(CashTransaction $tx, User $user, string $action, string $note = ''): string
     {
-        return DB::transaction(function () use ($tx, $user, $action, $note) {
+        $message = DB::transaction(function () use (&$tx, $user, $action, $note) {
             $tx = CashTransaction::query()->lockForUpdate()->findOrFail($tx->id);
             $step = self::STEPS[$tx->status] ?? null;
             if (! $step) {
@@ -52,5 +53,15 @@ class CashWorkflow
                 default => 'Tersimpan. Menunggu persetujuan Ketua.',
             };
         });
+
+        $info = $tx->label().' ('.rupiah($tx->amount).')'.($note !== '' ? ' - '.$note : '');
+        match ($tx->status) {
+            'diperiksa' => Notify::send(Notify::ability('setujui-kas'), 'persetujuan', 'Pengeluaran kas menunggu persetujuan Anda', $info, route('finance.cash.approvals')),
+            'disetujui' => Notify::send(User::query()->find($tx->created_by), 'persetujuan', 'Pengeluaran kas disetujui', $info, route('finance.cash.index')),
+            'ditolak' => Notify::send(User::query()->find($tx->created_by), 'persetujuan', 'Pengeluaran kas ditolak', $info, route('finance.cash.index')),
+            default => null,
+        };
+
+        return $message;
     }
 }

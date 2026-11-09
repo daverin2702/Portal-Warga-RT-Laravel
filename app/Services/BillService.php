@@ -7,6 +7,7 @@ use App\Models\BillType;
 use App\Models\CashTransaction;
 use App\Models\Household;
 use App\Models\User;
+use App\Support\Notify;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -21,17 +22,26 @@ class BillService
         $households = Household::query()->pluck('id');
         $created = 0;
         $skipped = 0;
-        DB::transaction(function () use ($types, $households, $period, &$created, &$skipped) {
+        $notify = [];
+        DB::transaction(function () use ($types, $households, $period, &$created, &$skipped, &$notify) {
             foreach ($types as $type) {
                 foreach ($households as $hid) {
                     $bill = Bill::query()->firstOrCreate(
                         ['household_id' => $hid, 'name' => $type->name, 'period' => $period],
                         ['bill_type_id' => $type->id, 'allocation' => $type->allocation, 'amount' => $type->amount, 'status' => 'belum'],
                     );
-                    $bill->wasRecentlyCreated ? $created++ : $skipped++;
+                    if ($bill->wasRecentlyCreated) {
+                        $created++;
+                        $notify[$hid][] = $type->name;
+                    } else {
+                        $skipped++;
+                    }
                 }
             }
         });
+        foreach ($notify as $hid => $names) {
+            Notify::send(Notify::household($hid), 'tagihan', 'Tagihan baru periode '.$period, implode(', ', $names).'. Bayar dan unggah bukti di dasbor.', route('dashboard'));
+        }
 
         return ['types' => $types->count(), 'created' => $created, 'skipped' => $skipped];
     }
@@ -47,7 +57,10 @@ class BillService
                     ['household_id' => $hid, 'name' => $type->name, 'period' => $period],
                     ['bill_type_id' => $type->id, 'allocation' => $type->allocation, 'amount' => $amount, 'status' => 'belum'],
                 );
-                $created += $bill->wasRecentlyCreated ? 1 : 0;
+                if ($bill->wasRecentlyCreated) {
+                    $created++;
+                    Notify::send(Notify::household($hid), 'tagihan', 'Tagihan baru: '.$type->name, 'Periode '.$period.', '.rupiah($amount).'.', route('dashboard'));
+                }
             }
         });
 
@@ -65,12 +78,13 @@ class BillService
             throw new RuntimeException('Bukti bayar gagal disimpan. Coba lagi.');
         }
         $bill->update(['status' => 'menunggu', 'payment_method' => $method, 'proof_path' => $path, 'proof_uploaded_at' => now(), 'rejection_note' => null]);
+        Notify::send(Notify::ability('verifikasi-bayar'), 'tagihan', 'Bukti bayar masuk', ($bill->household?->head_name ?? 'Warga').': '.$bill->name.' '.$bill->period.', '.rupiah($bill->amount), route('finance.bills.index', ['status' => 'menunggu']));
     }
 
     /** Bendahara menerima pembayaran: tagihan lunas, struk terbit, kas bertambah. */
     public function accept(Bill $bill, User $verifier, ?string $method = null): string
     {
-        return DB::transaction(function () use ($bill, $verifier, $method) {
+        $number = DB::transaction(function () use (&$bill, $verifier, $method) {
             $bill = Bill::query()->with('household')->lockForUpdate()->findOrFail($bill->id);
             if ($bill->status === 'lunas') {
                 throw new RuntimeException('Tagihan ini sudah lunas.');
@@ -88,6 +102,9 @@ class BillService
 
             return $number;
         });
+        Notify::send(Notify::household($bill->household_id), 'tagihan', 'Pembayaran diterima', $bill->name.' '.$bill->period.' lunas. Struk '.$number.' sudah tersedia.', route('finance.bills.receipt', $bill));
+
+        return $number;
     }
 
     public function reject(Bill $bill, string $note): void
@@ -97,6 +114,7 @@ class BillService
         }
         $this->deleteProof($bill);
         $bill->update(['status' => 'belum', 'proof_path' => null, 'proof_uploaded_at' => null, 'rejection_note' => $note ?: 'Bukti tidak sesuai']);
+        Notify::send(Notify::household($bill->household_id), 'tagihan', 'Bukti bayar ditolak', $bill->name.' '.$bill->period.': '.$bill->rejection_note.'. Silakan unggah ulang.', route('dashboard'));
     }
 
     public function deleteProof(Bill $bill): void

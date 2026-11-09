@@ -29,7 +29,7 @@ class VerificationController extends Controller
         ]);
 
         if (! empty($data['kode'])) {
-            if (! preg_match('~(?:/verifikasi/|^)([A-Za-z0-9]{32})(?:[/?#]|$)~', trim($data['kode']), $m)) {
+            if (! preg_match('~(?:/verifikasi/|^)([A-Za-z0-9]{24,32})(?:[/?#]|$)~', trim($data['kode']), $m)) {
                 return response()->json(['valid' => false, 'pesan' => 'Kode QR ini bukan kode surat dari '.rt_name().'.']);
             }
             $letter = Letter::query()->with('household')->where('token', $m[1])->first();

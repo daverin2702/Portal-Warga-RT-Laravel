@@ -72,7 +72,21 @@
                 <div class="text-secondary small">Belum ada pengajuan. Ajukan surat domisili, pengantar KTP/KK, SKTM, dan lainnya dari rumah.</div>
             @endforelse
         </div>
-        <div class="panel text-secondary small"><i class="bi bi-info-circle me-1"></i>Pengumuman, aduan, dan notifikasi akan tersedia di dasbor ini pada tahap berikutnya.</div>
+        <div class="panel mb-4"><div class="d-flex justify-content-between"><h2 class="h5 mb-3">Pengumuman</h2><a class="small" href="{{ route('announcements.index') }}">Semua</a></div>
+            @forelse ($announcements as $a)
+                <div class="border-top py-2"><div class="fw-semibold">{{ $a->title }}</div><div class="small text-secondary">{{ $a->created_at->translatedFormat('j M Y') }} · {{ Str::limit($a->body, 110) }}</div></div>
+            @empty
+                <div class="text-secondary small">Belum ada pengumuman.</div>
+            @endforelse
+        </div>
+        <div class="panel"><div class="d-flex justify-content-between"><h2 class="h5 mb-3">Aduan saya</h2><a class="small" href="{{ route('complaints.index') }}">Kirim / lihat</a></div>
+            @forelse ($complaints as $c)
+                <div class="d-flex justify-content-between border-top py-2"><div><div class="fw-semibold">{{ $c->title }}</div><div class="small text-secondary">{{ $c->category }} · {{ $c->created_at->translatedFormat('j M Y') }}</div></div>
+                    <span class="badge align-self-center text-bg-{{ ['baru' => 'danger', 'diproses' => 'warning', 'selesai' => 'success'][$c->status] ?? 'secondary' }}">{{ ucfirst($c->status) }}</span></div>
+            @empty
+                <div class="text-secondary small">Lampu jalan mati atau jalan rusak? Laporkan lewat menu Aduan & Aspirasi.</div>
+            @endforelse
+        </div>
     </div>
     <div class="col-lg-5"><div class="panel">
         <h2 class="h5 mb-3">Pengurus inti</h2>

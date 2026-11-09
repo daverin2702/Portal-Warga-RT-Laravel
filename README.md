@@ -2,13 +2,13 @@
 
 # 🏘️ Portal Warga RT · Laravel 13
 
-**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR, iuran & kas yang transparan, dan halaman depan yang bisa diatur sendiri.**
+**Administrasi RT modern: data warga, jabatan pengurus, surat ber-QR, iuran & kas yang transparan, pengumuman, aduan, tombol darurat, chat, dan halaman depan yang bisa diatur sendiri.**
 
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL%20%2F%20MariaDB-supported-4479A1?logo=mysql&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-7952B3?logo=bootstrap&logoColor=white)
-![Status](https://img.shields.io/badge/status-Tahap%203-F2B705)
+![Status](https://img.shields.io/badge/status-Tahap%204%20selesai-2EA043)
 
 </div>
 
@@ -23,7 +23,7 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 | **1** | Fondasi, login per peran, jabatan & hak akses, dasbor + grafik, data warga, akun, impor Excel, pengaturan situs, tema, profil, struktur pengurus | ✅ Selesai |
 | **2** | Surat: templat, editor A4, alur Sekretaris → Wakil → Ketua, tanda tangan QR/basah, cetak berkop, cek keaslian | ✅ Selesai |
 | **3** | Keuangan: jenis tagihan (IPL, Kas RT), tagihan wajib, bukti bayar, struk, kas, persetujuan pengeluaran, laporan keuangan | ✅ Selesai |
-| 4 | Pengumuman, aduan, notifikasi, tombol darurat, chat, perintah pindah data dari versi PHP | ⏳ Berikutnya |
+| **4** | Pengumuman, aduan, notifikasi per peran, tombol darurat, chat pop-up, perintah pindah data dari versi PHP | ✅ Selesai |
 
 ---
 
@@ -74,6 +74,36 @@ Ini adalah penulisan ulang **Portal Warga RT** (versi PHP murni) ke **Laravel 13
 - 📊 **Grafik arus kas** bulanan di dasbor pengurus
 
 > Pembayaran masih **manual** (unggah bukti). Integrasi payment gateway bisa ditambahkan di `App\Services\BillService::accept()`.
+
+## 📣 Fitur Tahap 4 — Komunitas
+
+- 📢 **Pengumuman** per kategori (kegiatan, kerja bakti, siskamling, keamanan); dibuat Ketua, Wakil, Sekretaris; semua akun langsung mendapat notifikasi
+- 🛠️ **Aduan & aspirasi** dengan foto (disimpan privat): warga mengirim, pengurus mengubah status Baru → Diproses → Selesai dan memberi tanggapan; keluarga pelapor diberi tahu
+- 🔔 **Notifikasi per peran**: lonceng di bilah atas + halaman notifikasi + notifikasi browser (opsional) dan bunyi. Contoh: Wakil diberi tahu saat surat/pengeluaran perlu diperiksa, Ketua saat perlu ditandatangani/disetujui, Bendahara saat ada bukti bayar, warga saat tagihan terbit atau surat selesai
+- 🚨 **Tombol darurat** (kebakaran, pencurian, medis, dll.): layar merah + sirene di perangkat **semua pengurus dan warga** yang sedang membuka portal, lengkap dengan nama dan alamat rumah pengirim; pengurus menandai "situasi aman"; dibatasi 1 sinyal per 2 menit per akun
+- 💬 **Chat pop-up**: grup Warga, grup Pengurus, dan pesan pribadi; warga bisa menghubungi pengurus secara pribadi, jumlah pesan belum dibaca tampil di tombol chat
+- 📊 Dasbor menampilkan pengumuman terbaru, aduan keluarga (warga), dan jumlah aduan baru (pengurus)
+
+> Notifikasi, darurat, dan chat memakai **polling** ringan (15 detik; chat 4 detik saat dibuka), jadi berjalan di XAMPP biasa tanpa server websocket.
+
+## 🔁 Pindah Data dari Versi PHP
+
+Database lama (`db_rt`) cukup dibaca, tidak diubah:
+
+```bash
+php artisan migrate:fresh --seed
+php artisan rt:pindah-data --database=db_rt --username=root --password= --uploads="C:/xampp/htdocs/web-rt/app/uploads"
+```
+
+| Opsi | Bawaan | Keterangan |
+|---|---|---|
+| `--host`, `--port` | `127.0.0.1`, `3306` | server database lama |
+| `--database` | `db_rt` | nama database lama |
+| `--username`, `--password` | `root`, kosong | akun database lama |
+| `--uploads` | – | folder `app/uploads` versi lama: logo, foto, dan bukti bayar ikut disalin |
+| `--force` | – | tetap jalan walau database baru sudah berisi data warga |
+
+Yang dipindah: keluarga, akun (**kata sandi lama tetap berlaku**), jabatan, pengaturan situs + gambar, templat surat, surat terbit (kode QR lama tetap bisa diverifikasi), pengajuan surat, jenis tagihan, tagihan + bukti bayar, kas, pengumuman, aduan. Riwayat alur diubah ke format baru. Chat, notifikasi, dan riwayat darurat tidak dipindah. Semua berjalan dalam satu transaksi: jika ada galat, tidak ada yang tersimpan.
 
 ---
 
@@ -126,12 +156,16 @@ Bisa diubah sebelum seeding lewat `.env`: `RT_ADMIN_USERNAME`, `RT_ADMIN_PASSWOR
 
 Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvider`.
 
-| Peran / jabatan | Tahap 1 |
+| Peran / jabatan | Wewenang |
 |---|---|
 | 🛠️ Administrator | Semua wewenang, akun & jabatan, impor, pengaturan, tema |
-| 📝 Sekretaris / Wakil Sekretaris | Tambah, ubah, hapus data warga |
-| 👑 Ketua · 🔍 Wakil · 💼 Bendahara | Melihat data warga dan dasbor pengurus (wewenang surat & keuangan aktif di tahap 2–3) |
-| 🏡 Warga | Dasbor warga, profil & data keluarga sendiri, struktur pengurus |
+| 👑 Ketua RT | Menandatangani surat, menyetujui pengeluaran kas, pengumuman, menangani aduan |
+| 🔍 Wakil Ketua | Memeriksa surat dan pengeluaran kas, pengumuman, menangani aduan |
+| 📝 Sekretaris / Wakil Sekretaris | Data warga, membuat surat (manual/templat), meneruskan pengajuan, templat, pengumuman, aduan |
+| 💼 Bendahara | Jenis tagihan, menerbitkan tagihan, verifikasi bukti bayar, memposting kas |
+| 🧹 Seksi & tim | Akses pengurus: dasbor, data warga (lihat), grup chat pengurus |
+| 🏡 Warga | Membayar tagihan, mengajukan surat, mengirim aduan, membaca pengumuman, chat dengan pengurus |
+| 🚨 Semua akun | Tombol darurat, notifikasi, chat |
 
 ---
 
@@ -148,9 +182,13 @@ Diatur di `config/rt.php` dan didaftarkan sebagai **Gate** di `AppServiceProvide
 | `bill_types` | jenis tagihan: nominal bawaan, alokasi kas, wajib/opsional |
 | `bills` | tagihan per keluarga per periode, bukti bayar, struk |
 | `cash_transactions` | buku kas: pemasukan/pengeluaran, status persetujuan, riwayat |
+| `announcements`, `complaints` | pengumuman dan aduan warga |
+| `notifications` | notifikasi bawaan Laravel (database) |
+| `emergencies` | sinyal darurat aktif & riwayat |
+| `chat_messages`, `chat_reads` | pesan chat per ruang dan penanda baca |
 | `sessions`, `cache`, `jobs` | bawaan Laravel |
 
-> Database versi PHP **tidak langsung kompatibel**. Perintah pemindahan data (`php artisan rt:pindah-data`) dijadwalkan di Tahap 4.
+> Database versi PHP **tidak langsung kompatibel**; pindahkan dengan `php artisan rt:pindah-data` (lihat di atas).
 
 ---
 
@@ -161,15 +199,20 @@ app/
 ├── Http/Controllers/         Beranda, Login, Dasbor, Warga, Profil, Struktur
 │   ├── Letters/              Pengajuan, Persetujuan, Templat, Buat/Arsip/Cetak, Verifikasi
 │   ├── Finance/              Tagihan, Jenis Tagihan, Kas & Persetujuan Kas, Laporan
+│   ├── Community/            Pengumuman, Aduan, Notifikasi, Darurat, Chat
 │   └── Admin/                Akun, Impor, Pengaturan, Tema
 ├── Http/Middleware/EnsurePasswordChanged.php
-├── Models/                   User, Household, Setting
+├── Models/                   User, Household, Setting, Letter*, Bill*, CashTransaction,
+│                             Announcement, Complaint, Emergency, ChatMessage
 ├── Services/                 PositionService, HouseholdImporter, SpreadsheetReader,
 │                             LetterRenderer, LetterWorkflow, BillService, CashWorkflow
-├── Support/                  Board (profil Ketua/Wakil), Uploads
+├── Console/Commands/         PindahData (rt:pindah-data)
+├── Notifications/            PortalNotice
+├── Support/                  Board (profil Ketua/Wakil), Uploads, Notify
 └── helpers.php               setting(), rt_name(), rt_asset(), upload_url(), ...
 config/rt.php                 jabatan, wewenang, tema, nilai bawaan situs
 resources/views/              Blade + Bootstrap 5
+public/js/app.js              lonceng, darurat, chat pop-up
 public/vendor/                aset offline
 public/uploads/               logo & foto unggahan (tidak masuk Git)
 ```

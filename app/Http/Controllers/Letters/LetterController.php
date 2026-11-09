@@ -7,6 +7,7 @@ use App\Models\Household;
 use App\Models\Letter;
 use App\Models\LetterTemplate;
 use App\Services\LetterRenderer;
+use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -75,6 +76,8 @@ class LetterController extends Controller
             'qr_signature' => $data['signature'] === 'qr', 'status' => 'draf', 'token' => Str::random(32),
             'log' => [['at' => now()->format('d/m/Y H:i'), 'by' => $user->name.' ('.$user->displayRole().')', 'action' => 'Draf dibuat', 'note' => '']],
         ]);
+
+        Notify::send(Notify::ability('periksa-surat'), 'persetujuan', 'Draf surat perlu diperiksa', $letter->title.' - '.$letter->number, route('letters.approvals.index'));
 
         return redirect()->route('letters.print', $letter)->with('success', 'Draf tersimpan. Surat menunggu pemeriksaan Wakil Ketua dan tanda tangan Ketua sebelum berlaku.');
     }

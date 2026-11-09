@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Announcement;
 use App\Models\CashTransaction;
+use App\Models\Complaint;
 use App\Models\Household;
 use App\Models\User;
 use App\Services\BillService;
@@ -44,7 +46,7 @@ class DemoSeeder extends Seeder
             ]);
             $positions->assign($user, $position);
         }
-    
+
         // Keuangan contoh: jenis tagihan bawaan, tagihan wajib bulan ini, saldo awal, dan satu pengeluaran disetujui.
         $this->call(BillTypeSeeder::class);
         $bills->issueMandatory(now()->format('Y-m'));
@@ -56,5 +58,20 @@ class DemoSeeder extends Seeder
             'date' => now()->startOfMonth()->toDateString(), 'allocation' => 'Keamanan', 'description' => 'Token listrik pos ronda',
             'amount' => 100000, 'status' => 'disetujui',
         ]);
+
+        // Komunitas contoh: dua pengumuman dan satu aduan dari akun rina.
+        $chair = User::query()->where('position', 'ketua')->value('id');
+        Announcement::query()->firstOrCreate(['title' => 'Kerja bakti bersih saluran air'], [
+            'body' => "Minggu pagi pukul 07.00, kumpul di pos ronda.\nMohon membawa cangkul atau sapu lidi.", 'category' => 'kerja bakti', 'created_by' => $chair,
+        ]);
+        Announcement::query()->firstOrCreate(['title' => 'Jadwal siskamling bulan ini'], [
+            'body' => 'Jadwal piket ronda sudah ditempel di pos. Tim Keamanan bertugas mulai pukul 22.00.', 'category' => 'siskamling', 'created_by' => $chair,
+        ]);
+        if ($rina = User::query()->where('username', 'rina')->first()) {
+            Complaint::query()->firstOrCreate(['title' => 'Lampu jalan depan rumah mati'], [
+                'household_id' => $rina->household_id, 'user_id' => $rina->id, 'category' => 'Lampu jalan',
+                'description' => 'Sudah tiga malam lampu jalan di depan rumah tidak menyala.',
+            ]);
+        }
     }
 }

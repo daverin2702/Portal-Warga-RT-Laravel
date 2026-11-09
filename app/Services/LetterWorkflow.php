@@ -6,6 +6,7 @@ use App\Models\Letter;
 use App\Models\LetterRequest;
 use App\Models\User;
 use App\Support\Board;
+use App\Support\Notify;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -43,7 +44,7 @@ class LetterWorkflow
 
     public function advanceRequest(LetterRequest $req, User $user, string $action, string $note = '', bool $qr = true): string
     {
-        return DB::transaction(function () use ($req, $user, $action, $note, $qr) {
+        $message = DB::transaction(function () use (&$req, $user, $action, $note, $qr) {
             $req = LetterRequest::query()->lockForUpdate()->findOrFail($req->id);
             $step = $this->authorizeStep(self::REQUEST_STEPS, $req->status, $user, $action);
             $req->status = $action === 'tolak' ? 'ditolak' : $step[2];
@@ -73,11 +74,22 @@ class LetterWorkflow
 
             return $message;
         });
+
+        $info = $req->template_name.($note !== '' ? ' - '.$note : '');
+        match ($req->status) {
+            'diteruskan' => Notify::send(Notify::ability('periksa-surat'), 'persetujuan', 'Pengajuan surat perlu diperiksa', $info, route('letters.approvals.index')),
+            'diperiksa' => Notify::send(Notify::ability('tandatangani-surat'), 'persetujuan', 'Surat menunggu tanda tangan Anda', $info, route('letters.approvals.index')),
+            'disetujui' => Notify::send(Notify::household($req->household_id), 'persetujuan', 'Surat Anda sudah terbit', $info, route('letters.requests.index')),
+            'ditolak' => Notify::send(Notify::household($req->household_id), 'persetujuan', 'Pengajuan surat ditolak', $info, route('letters.requests.index')),
+            default => null,
+        };
+
+        return $message;
     }
 
     public function advanceDraft(Letter $letter, User $user, string $action, string $note = '', bool $qr = true): string
     {
-        return DB::transaction(function () use ($letter, $user, $action, $note, $qr) {
+        $message = DB::transaction(function () use (&$letter, $user, $action, $note, $qr) {
             $letter = Letter::query()->lockForUpdate()->findOrFail($letter->id);
             $step = $this->authorizeStep(self::DRAFT_STEPS, $letter->status, $user, $action);
             $letter->status = $action === 'tolak' ? 'ditolak' : $step[2];
@@ -95,6 +107,16 @@ class LetterWorkflow
                 default => 'Tersimpan.',
             };
         });
+
+        $info = $letter->title.' - '.$letter->number.($note !== '' ? ' - '.$note : '');
+        match ($letter->status) {
+            'diperiksa' => Notify::send(Notify::ability('tandatangani-surat'), 'persetujuan', 'Draf surat menunggu tanda tangan Anda', $info, route('letters.approvals.index')),
+            'terbit' => Notify::send(User::query()->find($letter->created_by), 'persetujuan', 'Draf surat sudah ditandatangani', $info, route('letters.archive')),
+            'ditolak' => Notify::send(User::query()->find($letter->created_by), 'persetujuan', 'Draf surat ditolak', $info, route('letters.archive')),
+            default => null,
+        };
+
+        return $message;
     }
 
     private function authorizeStep(array $steps, string $status, User $user, string $action): array

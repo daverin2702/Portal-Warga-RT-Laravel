@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Letters;
 use App\Http\Controllers\Controller;
 use App\Models\LetterRequest;
 use App\Models\LetterTemplate;
+use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -52,6 +53,8 @@ class LetterRequestController extends Controller
             'template_name' => $template->name, 'purpose' => $data['purpose'], 'field_values' => $values, 'status' => 'diajukan',
             'log' => [['at' => now()->format('d/m/Y H:i'), 'by' => $user->name.' (Warga)', 'action' => 'Diajukan', 'note' => '']],
         ]);
+
+        Notify::send(Notify::ability('teruskan-surat'), 'persetujuan', 'Pengajuan surat baru', $user->name.': '.$template->name, route('letters.approvals.index'));
 
         return back()->with('success', 'Pengajuan surat terkirim. Prosesnya: diteruskan Sekretaris, diperiksa Wakil Ketua, ditandatangani Ketua.');
     }

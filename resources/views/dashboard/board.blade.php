@@ -30,8 +30,18 @@
             <a class="btn btn-light btn-sm" href="{{ route('admin.settings.edit') }}">Pengaturan situs</a>
         @endif
     </div>
-    <div class="small text-secondary mt-3">Modul pengumuman, aduan, notifikasi, tombol darurat, dan chat menyusul di tahap berikutnya.</div>
+        <a class="btn btn-light btn-sm" href="{{ route('announcements.index') }}">Pengumuman</a>
+        <a class="btn btn-light btn-sm" href="{{ route('complaints.index') }}">Aduan warga</a>
+    </div>
 </div>
+
+@if ($announcements->isNotEmpty())
+<div class="panel mb-4"><div class="d-flex justify-content-between"><h2 class="h6 fw-bold">Pengumuman terbaru</h2><a class="small" href="{{ route('announcements.index') }}">Semua</a></div>
+    @foreach ($announcements as $a)
+        <div class="border-top py-2"><div class="fw-semibold">{{ $a->title }}</div><div class="small text-secondary">{{ $a->created_at->translatedFormat('j M Y') }} · {{ Str::limit($a->body, 110) }}</div></div>
+    @endforeach
+</div>
+@endif
 
 <div class="row g-3 mb-4">
     <div class="col-lg-8"><div class="panel h-100"><h2 class="h6 fw-bold">Jumlah KK per blok</h2><div class="chart-box"><canvas id="cBlok" aria-label="Grafik jumlah KK per blok" role="img"></canvas></div></div></div>
